@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <Configuration>
+    <Tenant></Tenant>
+    <ClientId></ClientId>
+    <!-- Specifies which tenant to use, using script parameter -Tenant will override this value -->
+    <Document>True</Document>
+    <!-- Enables the document feature and creates a wordfile -->
+    <DocumentName>IntuneDoc_{ClientName}_{0}.docx</DocumentName>
+    <!-- Sets the document name, using script parameter -DocumentName will override this value -->
+    <DocumentLastChange>False</DocumentLastChange>
+    <!-- Retrives who did the last change for each object using audit logs where applicable.
+         This requires the appropriate rights to read audit logs to work properly. -->
+    <MaxStringLength>300</MaxStringLength>
+    <!-- Sets the max length for any name/value when documenting.
+         Values longer than the specified value will be truncated -->
+    <Export>False</Export>
+    <!-- Enabled the export function, this will export a JSON file for each setting -->
+    <ExportPath>C:\temp\export_{0}</ExportPath>
+    <!-- Sets the path where the exported files will be created. If files already exist they will be
+         overwritten, using script parameter -ExportPath will override this value.
+         If both values are empty, the script will ask for input.
+         {0} will be replaced with datetime in the format yyyyMMddHHmm, e.g. c:\temp\export_202001281313 -->
+    <ExportCSV>False</ExportCSV>
+    <!-- This will export a csv for every file in addition to the JSON created -->
+    <AppendDate>True</AppendDate>
+    <!-- Appends the date to all exported files -->
+    <maxlogfilesize>5</maxlogfilesize>
+    <!-- Max log size in Megabytes -->
+    <graphApiVersion>Beta</graphApiVersion>
+    <!-- API version, valid values are "Beta" and "v1.0" -->
+  </Configuration>
+  <Process>
+    <!-- Enable/Disable classes for export/documentation -->
+    <!-- OFF: requires enrolled devices, causes 503 and NullReferenceException on empty tenants -->
+    <managedDeviceOverview>True</managedDeviceOverview>
+    <termsAndConditions>True</termsAndConditions>
+    <deviceCompliancePolicies>True</deviceCompliancePolicies>
+    <deviceEnrollmentConfigurations>True</deviceEnrollmentConfigurations>
+    <deviceConfigurations>True</deviceConfigurations>
+    <!-- OFF: returns null if no Autopilot profiles exist -->
+    <windowsAutopilotDeploymentProfiles>True</windowsAutopilotDeploymentProfiles>
+    <mobileApps>True</mobileApps>
+    <!-- Enable/Disable documentation of Store for Business apps, requires mobileApps True -->
+    <SfBApps>True</SfBApps>
+    <!-- OFF: only applies if Apple Push certificate is configured -->
+    <applePushNotificationCertificate>True</applePushNotificationCertificate>
+    <!-- OFF: only applies if Apple VPP tokens are configured -->
+    <vppTokens>True</vppTokens>
+    <policysets>True</policysets>
+    <groupPolicyConfigurations>True</groupPolicyConfigurations>
+    <deviceManagementScripts>True</deviceManagementScripts>
+    <!-- OFF: high performance impact, not critical -->
+    <Groups>False</Groups>
+    <!-- Conditional Access policies - requires Policy.ReadWrite.ConditionalAccess -->
+    <conditionalAccess>True</conditionalAccess>
+    <!-- Custom RBAC roles in Intune -->
+    <roleDefinitions>True</roleDefinitions>
+    <!-- RBAC role assignments -->
+    <roleAssignments>True</roleAssignments>
+    <!-- Device categories configured in Intune -->
+    <deviceCategories>True</deviceCategories>
+    <!-- OFF: HealthMonitoringData.Read.All does not exist as delegated permission in Graph -->
+    <deviceHealthScripts>False</deviceHealthScripts>
+    <!-- OFF: returns null if no Windows Quality Update profiles exist -->
+    <windowsQualityUpdateProfiles>True</windowsQualityUpdateProfiles>
+    <!-- OFF: returns null if no Windows Feature Update profiles exist -->
+    <windowsFeatureUpdateProfiles>True</windowsFeatureUpdateProfiles>
+    <!-- Compliance notification message templates -->
+    <notificationMessageTemplates>True</notificationMessageTemplates>
+    <!-- Scope tags for administration delegation -->
+    <roleScopeTags>True</roleScopeTags>
+  </Process>
+</root>
