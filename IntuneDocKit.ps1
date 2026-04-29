@@ -167,15 +167,15 @@ $cmbModo.Location = New-Object System.Drawing.Point(14, 174)
 $cmbModo.Size = New-Object System.Drawing.Size(278, 22)
 $cmbModo.DropDownStyle = "DropDownList"
 [void]$cmbModo.Items.AddRange(@(
-    "Usar App Registration existente",
-    "Crear App Registration nueva 1era vez",
-    "Solo crear App Registration"
+    "Solo crear App Registration",
+    "Usar App Registration existente"
+    # "Crear App Registration nueva 1era vez"  # <-- deshabilitado
 ))
 $cmbModo.SelectedIndex = 0
 
 # Deshabilitar "Nombre del cliente" en modos 2 y 3 (solo crean App Registration)
 $cmbModo.Add_SelectedIndexChanged({
-    $soloAppReg = ($cmbModo.SelectedIndex -eq 1 -or $cmbModo.SelectedIndex -eq 2)
+    $soloAppReg = ($cmbModo.SelectedIndex -eq 0)
 
     $txtClient.Enabled   = -not $soloAppReg
     $txtClient.BackColor = if ($soloAppReg) { [System.Drawing.Color]::FromArgb(235, 237, 240) } `
@@ -555,8 +555,7 @@ $btnCmd.Add_Click({
     if ([string]::IsNullOrEmpty($tenant)) { $tenant = "TU-TENANT-ID" }
 
     $modeFlag = switch ($modo) {
-        1       { "" }
-        2       { "-OnlyCreateApp" }
+        0       { "-OnlyCreateApp" }
         default { "-SkipAppCreation" }
     }
 
@@ -582,17 +581,16 @@ $btnExport.Add_Click({
     if ([string]::IsNullOrEmpty($tenant)) {
         Write-Console "  [X]  Completa el Tenant ID." "red"; return
     }
-    if ($modo -eq 0 -and [string]::IsNullOrEmpty($client)) {
+    if ($modo -eq 1 -and [string]::IsNullOrEmpty($client)) {
         Write-Console "  [X]  Completa el Nombre del Cliente." "red"; return
     }
-    if (($modo -eq 1 -or $modo -eq 2) -and [string]::IsNullOrEmpty($client)) { $client = "AppRegistration" }
+    if ($modo -eq 0 -and [string]::IsNullOrEmpty($client)) { $client = "AppRegistration" }
     $masterScript = Join-Path $ScriptRoot "MasterExport-MEM.ps1"
     if (-not (Test-Path $masterScript)) {
         Write-Console "  [X]  No se encontro MasterExport-MEM.ps1 en: $ScriptRoot" "red"; return
     }
     $modeFlag = switch ($modo) {
-        1 { "" }
-        2 { "-OnlyCreateApp" }
+        0 { "-OnlyCreateApp" }
         default { "-SkipAppCreation" }
     }
 
