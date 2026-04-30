@@ -19,10 +19,12 @@ Internet access to install modules from PSGallery and authenticate against Micro
 
 
 Module Installation
+
 The script automatically installs all required modules during the first step. No manual installation is needed. Required modules are: PSWriteWord, PSWriteHTML, ImportExcel, Microsoft.Graph.Authentication, Microsoft.Graph.Applications, Microsoft.Graph.Identity.SignIns, AzureAD version 2.0.2.140, and MSAL.PS.
 In some environments, running PowerShell as Administrator may be required to install modules in the AllUsers scope.
 
 Project Components
+
 IntuneDocKit.ps1 — The main graphical interface built with Windows Forms. The user enters the Tenant ID, client name, UPN, and selects the execution mode. It also includes an integrated console showing real-time progress and a visual step progress bar.
 MasterExport-MEM.ps1 — The master orchestrator. Coordinates the five process steps and handles the logic for each execution mode. Receives parameters from the GUI or directly from the command line.
 Export-MEMConfiguration.ps1 — The export engine. Authenticates the user via MSAL Device Code Flow, makes all calls to Microsoft Graph API, and generates the Word document using the included template.
@@ -31,6 +33,7 @@ MEMDocumentationTempl.docx — The base Word template. Defines the structure, st
 IntuneDocKit.exe — A compiled executable for easy distribution without needing to run PowerShell directly.
 
 Execution Modes
+
 Mode 1: Create a new App Registration (first run)
 Used for the first run on a new tenant. The script creates the App Registration in Azure, assigns all required permissions, grants Admin Consent automatically, updates the XML with the obtained TenantId and AppId, and then proceeds to export the full documentation.
 powershell.\MasterExport-MEM.ps1 -TenantId "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" -ClientName "Client Name"
@@ -42,6 +45,7 @@ Useful when you want to prepare tenant access but run the export at a later time
 powershell.\MasterExport-MEM.ps1 -TenantId "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" -OnlyCreateApp
 
 The Five Process Steps
+
 Step 1 – Modules: Verifies that all required PowerShell modules are installed. Installs any missing ones automatically from PSGallery. Also configures the NuGet provider and sets PSGallery as a trusted repository.
 Step 2 – App Registration: Creates an App Registration named "IntuneDocKit" in the Azure tenant using Microsoft.Graph. If an app with that name already exists, it reuses it without creating duplicates. Also enables Public Client Flows and creates the corresponding Service Principal. This step only runs in Modes 1 and 3.
 Step 3 – Permissions & Admin Consent: Assigns the required delegated permissions to the App Registration and automatically grants Admin Consent for all tenant users. All assigned permissions are read-only and cover devices, apps, users, groups, directory, policies, and Intune audit areas. This step only runs in Modes 1 and 3.
@@ -49,6 +53,7 @@ Step 4 – XML Update: Writes the Tenant ID and Client ID to the Export-MEMConfi
 Step 5 – Export: Launches a clean PowerShell session to avoid conflicts between the Microsoft.Graph and MSAL.PS modules. In this session, the user is authenticated via MSAL Device Code Flow, all Microsoft Graph API calls are made using the Beta version, and the Word document with the full tenant documentation is generated.
 
 Device Code Authentication
+
 During Step 5, the script prompts the user to authenticate. The flow is as follows:
 
 The script displays a one-time code in the console.
@@ -78,9 +83,11 @@ graphApiVersion — Defines the Graph API version. Default: Beta.
 The Process section of the XML contains one entry per Intune section with a value of True or False to include or exclude it from the documentation.
 
 Output
+
 When the process completes, a Word file is generated in the configured path, typically C:\temp. The file opens automatically upon completion. The document includes a cover page with the client name and date, and one section per Intune area configured in the XML, with tables of values and properties extracted directly from the tenant.
 
 GUI Usage
+
 When opening IntuneDocKit.exe or running IntuneDocKit.ps1, a graphical interface appears with the following fields:
 
 Client Name — Appears on the cover page of the generated Word document.
