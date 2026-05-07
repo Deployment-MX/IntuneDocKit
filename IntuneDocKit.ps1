@@ -1,4 +1,4 @@
-﻿#Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Windows.Forms
 #Add-Type -AssemblyName System.Drawing
 
 try {
@@ -247,18 +247,6 @@ $btnCmd.FlatStyle = "Flat"
 $btnCmd.FlatAppearance.BorderColor = $colorBlue
 $btnCmd.FlatAppearance.BorderSize = 1
 $btnCmd.Cursor = "Hand"
-
-$btnClear = New-Object System.Windows.Forms.Button
-$btnClear.Text = "Limpiar consola"
-$btnClear.Font = $fontBtn
-$btnClear.Location = New-Object System.Drawing.Point(14, 326)
-$btnClear.Size = New-Object System.Drawing.Size(278, 28)
-$btnClear.BackColor = $colorPanel
-$btnClear.ForeColor = $colorMuted
-$btnClear.FlatStyle = "Flat"
-$btnClear.FlatAppearance.BorderColor = $colorBorder
-$btnClear.FlatAppearance.BorderSize = 1
-$btnClear.Cursor = "Hand"
 
 $sep3 = New-Object System.Windows.Forms.Panel
 $sep3.BackColor = $colorBorder
@@ -851,3 +839,4 @@ $btnExport.Add_Click({
 $form.Controls.AddRange(@($pnlHeader, $pnlLeft, $pnlRight, $pnlFooter))
 $form.Add_Shown({ $form.Activate() })
 [void]$form.ShowDialog()
+
