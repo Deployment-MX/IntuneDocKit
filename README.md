@@ -1,102 +1,354 @@
 IntuneDocKit
-A PowerShell tool that automatically generates complete technical documentation for a Microsoft Intune tenant and saves it as a Word (.docx) file. Based on the original project by @matbe, modernized and enhanced with automated App Registration, permissions, and Admin Consent via Microsoft Graph API.
 
-Description
-IntuneDocKit solves one of the most common problems in Microsoft Intune administration: technical documentation. Manually documenting a tenant means reviewing dozens of configurations, copying values, organizing sections, and keeping the document up to date — a slow, error-prone process that's hard to standardize across projects.
-IntuneDocKit automates the entire workflow. It connects to the tenant using Microsoft Graph API through a dedicated App Registration, extracts the complete Intune configuration, and generates a structured Word document ready to deliver to a client or use internally as a technical backup.
-All operations are read-only. The script never modifies any tenant configuration.
+🚀 Automated Microsoft Intune Documentation Generator
+A PowerShell-based solution that automatically generates complete technical documentation for a Microsoft Intune tenant and exports it as a structured Word (.docx) document.
 
-What It Documents
-IntuneDocKit extracts and documents more than 20 Intune sections, including:
-Device compliance policies, device configurations, enrollment settings, Windows Autopilot profiles, mobile apps and app protection policies, Conditional Access policies, RBAC roles and their assignments, device scripts, Windows Quality Update and Feature Update profiles, notification message templates, Scope Tags, device categories, Apple VPP tokens, Apple Push Notification certificate, and a general summary of the managed device inventory.
+Based on the original project by matbe and modernized with:
 
+Automated App Registration
+Microsoft Graph integration
+Automatic permission assignment
+Admin Consent automation
+Modern Windows Forms GUI
+Improved export workflow and compatibility
+Overview
+
+Documenting Microsoft Intune environments manually is time-consuming, inconsistent, and difficult to maintain across projects.
+
+IntuneDocKit automates the entire process by:
+
+Connecting securely to Microsoft Graph
+Extracting tenant configuration data
+Organizing the information into structured sections
+Generating a professional Word document ready for delivery or internal documentation
+
+⚠️ All operations are read-only.
+IntuneDocKit never modifies tenant configurations.
+
+Features
+
+✅ Automated Intune documentation generation
+✅ Automated Azure App Registration creation
+✅ Automatic Microsoft Graph permission assignment
+✅ Automatic Admin Consent grant
+✅ Microsoft Graph API integration
+✅ GUI interface with real-time progress
+✅ Word document generation (.docx)
+✅ JSON export support
+✅ Modular architecture
+✅ Read-only tenant access
+
+What IntuneDocKit Documents
+
+IntuneDocKit exports more than 20 Intune areas, including:
+
+Device Compliance Policies
+Device Configuration Profiles
+Enrollment Restrictions & Settings
+Windows Autopilot Profiles
+Mobile Applications
+App Protection Policies
+Conditional Access Policies
+RBAC Roles & Assignments
+PowerShell Scripts
+Windows Quality Update Policies
+Feature Update Policies
+Notification Templates
+Scope Tags
+Device Categories
+Apple VPP Tokens
+Apple Push Notification Certificate
+Managed Device Inventory Summary
+And more...
 Requirements
+Supported Environment
+Windows PowerShell 5.1
+Windows OS
+Internet connectivity
 
-PowerShell 5.1 on Windows. Not compatible with PowerShell Core or PowerShell 7.
-An Azure account with permissions to create App Registrations and grant Admin Consent.
-An Intune account with read permissions for authentication during the export.
-Internet access to install modules from PSGallery and authenticate against Microsoft Graph.
+❌ PowerShell Core / PowerShell 7 is currently not supported
 
+Required Permissions
+Azure Permissions
 
-Module Installation
+An Azure account capable of:
 
-The script automatically installs all required modules during the first step. No manual installation is needed. Required modules are: PSWriteWord, PSWriteHTML, ImportExcel, Microsoft.Graph.Authentication, Microsoft.Graph.Applications, Microsoft.Graph.Identity.SignIns, AzureAD version 2.0.2.140, and MSAL.PS.
-In some environments, running PowerShell as Administrator may be required to install modules in the AllUsers scope.
+Creating App Registrations
+Granting Admin Consent
+Intune Permissions
 
-Project Components
+An Intune account with:
 
-IntuneDocKit.ps1 — The main graphical interface built with Windows Forms. The user enters the Tenant ID, client name, UPN, and selects the execution mode. It also includes an integrated console showing real-time progress and a visual step progress bar.
-MasterExport-MEM.ps1 — The master orchestrator. Coordinates the five process steps and handles the logic for each execution mode. Receives parameters from the GUI or directly from the command line.
-Export-MEMConfiguration.ps1 — The export engine. Authenticates the user via MSAL Device Code Flow, makes all calls to Microsoft Graph API, and generates the Word document using the included template.
-Export-MEMConfiguration.xml — The configuration file. Stores the Tenant ID, the App Registration Client ID, and controls which Intune sections are included in the documentation. This file is updated automatically during Step 4.
-MEMDocumentationTempl.docx — The base Word template. Defines the structure, styles, and cover page of the output file.
-IntuneDocKit.exe — A compiled executable for easy distribution without needing to run PowerShell directly.
+Read access to Intune configuration
+Automatic Module Installation
 
+IntuneDocKit automatically installs all required modules during execution.
+
+Required Modules
+PSWriteWord
+PSWriteHTML
+ImportExcel
+Microsoft.Graph.Authentication
+Microsoft.Graph.Applications
+Microsoft.Graph.Identity.SignIns
+AzureAD 2.0.2.140
+MSAL.PS
+
+⚠️ Some environments may require running PowerShell as Administrator.
+
+Project Structure
+IntuneDocKit/
+│
+├── IntuneDocKit.ps1
+│   GUI interface built with Windows Forms
+│
+├── MasterExport-MEM.ps1
+│   Main orchestration engine
+│
+├── Export-MEMConfiguration.ps1
+│   Export engine using Microsoft Graph API
+│
+├── Export-MEMConfiguration.xml
+│   Main configuration file
+│
+├── MEMDocumentationTempl.docx
+│   Word template used for exports
+│
+└── IntuneDocKit.exe
+    Standalone executable version
 Execution Modes
+Mode 1 — Create New App Registration (First Run)
 
-Mode 1: Create a new App Registration (first run)
-Used for the first run on a new tenant. The script creates the App Registration in Azure, assigns all required permissions, grants Admin Consent automatically, updates the XML with the obtained TenantId and AppId, and then proceeds to export the full documentation.
-powershell.\MasterExport-MEM.ps1 -TenantId "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" -ClientName "Client Name"
-Mode 2: Use an existing App Registration
-For subsequent runs when the App Registration already exists. The script skips the Azure creation and configuration steps, reads the existing ClientId from the XML, and proceeds directly to the export.
-powershell.\MasterExport-MEM.ps1 -TenantId "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" -ClientName "Client Name" -SkipAppCreation
-Mode 3: Create App Registration only
-Useful when you want to prepare tenant access but run the export at a later time. The script creates the App Registration, assigns permissions, and updates the XML, but does not generate any document.
-powershell.\MasterExport-MEM.ps1 -TenantId "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" -OnlyCreateApp
+Used for new tenants.
 
-The Five Process Steps
+What it does
+Creates the App Registration
+Assigns permissions
+Grants Admin Consent
+Updates XML configuration
+Generates documentation
+Example
+.\MasterExport-MEM.ps1 `
+-TenantId "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" `
+-ClientName "Client Name"
+Mode 2 — Use Existing App Registration
 
-Step 1 – Modules: Verifies that all required PowerShell modules are installed. Installs any missing ones automatically from PSGallery. Also configures the NuGet provider and sets PSGallery as a trusted repository.
-Step 2 – App Registration: Creates an App Registration named "IntuneDocKit" in the Azure tenant using Microsoft.Graph. If an app with that name already exists, it reuses it without creating duplicates. Also enables Public Client Flows and creates the corresponding Service Principal. This step only runs in Modes 1 and 3.
-Step 3 – Permissions & Admin Consent: Assigns the required delegated permissions to the App Registration and automatically grants Admin Consent for all tenant users. All assigned permissions are read-only and cover devices, apps, users, groups, directory, policies, and Intune audit areas. This step only runs in Modes 1 and 3.
-Step 4 – XML Update: Writes the Tenant ID and Client ID to the Export-MEMConfiguration.xml file so the export can authenticate correctly. In Mode 2, it simply verifies that the values already exist in the XML.
-Step 5 – Export: Launches a clean PowerShell session to avoid conflicts between the Microsoft.Graph and MSAL.PS modules. In this session, the user is authenticated via MSAL Device Code Flow, all Microsoft Graph API calls are made using the Beta version, and the Word document with the full tenant documentation is generated.
+Used after the App Registration already exists.
 
+What it does
+Skips App Registration creation
+Uses existing Client ID from XML
+Generates documentation directly
+Example
+.\MasterExport-MEM.ps1 `
+-TenantId "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" `
+-ClientName "Client Name" `
+-SkipAppCreation
+Mode 3 — Create App Registration Only
+
+Used when preparing tenant access without exporting documentation immediately.
+
+What it does
+Creates App Registration
+Assigns permissions
+Updates XML
+Does NOT generate documentation
+Example
+.\MasterExport-MEM.ps1 `
+-TenantId "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" `
+-OnlyCreateApp
+The Five-Step Process
+Step 1 — Module Validation
+Verifies required modules
+Installs missing modules automatically
+Configures NuGet provider
+Sets PSGallery as trusted
+Step 2 — App Registration
+
+Creates an App Registration named:
+
+IntuneDocKit
+
+Also:
+
+Enables Public Client Flows
+Creates Service Principal
+Reuses existing app if already present
+
+Only executed in Modes 1 and 3
+
+Step 3 — Permissions & Admin Consent
+
+Automatically:
+
+Assigns Microsoft Graph delegated permissions
+Grants Admin Consent
+
+Permissions are primarily read-only.
+
+Only executed in Modes 1 and 3
+
+Step 4 — XML Configuration Update
+
+Updates:
+
+Tenant ID
+Client ID
+
+inside:
+
+Export-MEMConfiguration.xml
+Step 5 — Export Engine
+
+Launches a clean PowerShell session to avoid conflicts between:
+
+Microsoft.Graph
+MSAL.PS
+
+Then:
+
+Authenticates user via Device Code Flow
+Executes Graph API calls
+Generates Word documentation
 Device Code Authentication
 
-During Step 5, the script prompts the user to authenticate. The flow is as follows:
+During authentication:
 
-The script displays a one-time code in the console.
-The user opens a browser and navigates to https://microsoft.com/devicelogin.
-The user enters the code shown in the console.
-The user authenticates with an Intune account that has read permissions.
-Once authentication is complete, the process continues automatically.
+A one-time code is displayed
+Open:
+https://microsoft.com/devicelogin
+Enter the provided code
+Authenticate with an Intune account
+Export continues automatically
 
-The account used in this step does not need Azure permissions — it only needs read access to Intune.
+The account used here only requires Intune read permissions.
 
 Microsoft Graph Permissions
-The following delegated permissions are automatically assigned to the App Registration during Step 3:
-openid, profile, offline_access, User.Read, DeviceManagementApps.Read.All, DeviceManagementConfiguration.Read.All, DeviceManagementManagedDevices.Read.All, DeviceManagementRBAC.Read.All, DeviceManagementServiceConfig.Read.All, DeviceManagementScripts.Read.All, Directory.Read.All, User.Read.All, Group.Read.All, Organization.Read.All, Application.Read.All, Policy.Read.All, AuditLog.Read.All, Agreement.Read.All, CloudPC.Read.All, and Policy.ReadWrite.ConditionalAccess.
-All permissions are read-only except Policy.ReadWrite.ConditionalAccess, which is required to read Conditional Access policies through the delegated API available in Graph.
 
-XML Configuration File
-The Export-MEMConfiguration.xml file controls the export behavior. The most relevant fields are:
+The following delegated permissions are assigned automatically:
 
-Tenant — Stores the client's Tenant ID. Updated automatically in Step 4.
-ClientId — Stores the App Registration's App ID. Updated automatically in Step 4.
-Document — Enables Word file generation. Default value: True.
-DocumentName — Defines the generated file name. Default pattern: IntuneDoc_{ClientName}_{date}.docx.
-Export — Enables additional export in JSON format for each section. Default value: False.
-ExportPath — Defines the path where exported files are saved. Default: C:\temp\export_{date}.
-graphApiVersion — Defines the Graph API version. Default: Beta.
+openid
+profile
+offline_access
+User.Read
+DeviceManagementApps.Read.All
+DeviceManagementConfiguration.Read.All
+DeviceManagementManagedDevices.Read.All
+DeviceManagementRBAC.Read.All
+DeviceManagementServiceConfig.Read.All
+DeviceManagementScripts.Read.All
+Directory.Read.All
+User.Read.All
+Group.Read.All
+Organization.Read.All
+Application.Read.All
+Policy.Read.All
+AuditLog.Read.All
+Agreement.Read.All
+CloudPC.Read.All
+Policy.ReadWrite.ConditionalAccess
 
-The Process section of the XML contains one entry per Intune section with a value of True or False to include or exclude it from the documentation.
+Policy.ReadWrite.ConditionalAccess is required to read Conditional Access policies through delegated Graph API access.
 
+XML Configuration
+
+The file:
+
+Export-MEMConfiguration.xml
+
+controls export behavior.
+
+Key Settings
+Setting	Description
+Tenant	Tenant ID
+ClientId	App Registration Client ID
+Document	Enable/disable Word generation
+DocumentName	Output file name
+Export	Enable JSON exports
+ExportPath	Output directory
+graphApiVersion	Graph API version
+Section Control
+
+Each Intune section can be enabled or disabled individually:
+
+<Process>
+    <CompliancePolicies>True</CompliancePolicies>
+    <ConditionalAccess>True</ConditionalAccess>
+</Process>
 Output
 
-When the process completes, a Word file is generated in the configured path, typically C:\temp. The file opens automatically upon completion. The document includes a cover page with the client name and date, and one section per Intune area configured in the XML, with tables of values and properties extracted directly from the tenant.
+Generated files are typically saved to:
 
-GUI Usage
+C:\temp
 
-When opening IntuneDocKit.exe or running IntuneDocKit.ps1, a graphical interface appears with the following fields:
+The generated document includes:
 
-Client Name — Appears on the cover page of the generated Word document.
-Tenant ID — Identifies the client's Azure tenant.
-User UPN — Used as a hint for authentication in Step 5.
-Execution Mode — Select from the three modes described above.
+Cover page
+Client information
+Export date
+Structured Intune sections
+Tables and configuration details
 
-The GUI also includes a five-step progress bar, an integrated console showing real-time output with color-coded messages by type, and buttons to copy the equivalent PowerShell command, clear the console, and copy the Device Code during authentication.
+The document opens automatically when completed.
+
+GUI Interface
+
+Running:
+
+IntuneDocKit.exe
+
+or
+
+.\IntuneDocKit.ps1
+
+launches the graphical interface.
+
+GUI Features
+Client Name input
+Tenant ID input
+User UPN input
+Execution Mode selector
+Real-time console output
+Five-step progress bar
+Copy PowerShell command button
+Device Code copy button
+Security Notes
+Read-Only Operations
+
+IntuneDocKit:
+
+✅ Reads tenant configuration
+✅ Generates documentation
+❌ Does NOT modify Intune settings
+❌ Does NOT create policies
+❌ Does NOT change assignments
 
 Credits
-This project is based on the original work by matbe, available at https://github.com/matbe/MEMDocumentAndExporter.
-The original project was picked up, modernized, and extended with automation of the App Registration process, permission assignment, Admin Consent, and a complete graphical interface.
+
+This project is based on the original work by:
+
+matbe
+
+Original repository:
+
+MEMDocumentAndExporter
+
+The project was modernized and extended with:
+
+Automated App Registration
+Admin Consent automation
+Microsoft Graph integration
+GUI enhancements
+Improved export workflow
+Author
+
+Jesús Octavio Rodríguez
+Microsoft MVP • Windows Insider MVP • Microsoft Certified Trainer
+Specialized in:
+
+Microsoft Intune
+Windows 365
+Azure Virtual Desktop
+SCCM/MECM
+Enterprise Mobility
+Modern Endpoint Management
