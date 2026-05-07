@@ -70,5 +70,21 @@
     <notificationMessageTemplates>True</notificationMessageTemplates>
     <!-- Scope tags for administration delegation -->
     <roleScopeTags>True</roleScopeTags>
+    <!-- Device inventory - list of all managed devices with compliance and OS summary -->
+    <managedDevices>True</managedDevices>
+    <!-- Settings Catalog - modern configuration policies (replaces Device Configurations) -->
+    <settingsCatalog>True</settingsCatalog>
+    <!-- App Protection Policies (MAM) - iOS, Android, Windows BYOD policies -->
+    <appProtectionPolicies>True</appProtectionPolicies>
+    <!-- Assignment Filters - modern targeting filters for policy assignments -->
+    <assignmentFilters>True</assignmentFilters>
+    <!-- Endpoint Security - Antivirus, Firewall, Disk Encryption, EDR, ASR -->
+    <endpointSecurity>True</endpointSecurity>
+    <!-- Stale Devices - devices with no sync in the last 30 days -->
+    <staleDevices>True</staleDevices>
+    <!-- Non-Compliant Devices - actionable list of non-compliant devices -->
+    <nonCompliantDevices>True</nonCompliantDevices>
+    <!-- OS Version Summary - device count grouped by OS and version -->
+    <osVersionSummary>True</osVersionSummary>
   </Process>
 </root>
