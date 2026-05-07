@@ -686,6 +686,14 @@ try {
     [bool]$ProcesswindowsFeatureUpdates     = if ($Xml.root.Process.windowsFeatureUpdateProfiles)  { [System.Convert]::ToBoolean($Xml.root.Process.windowsFeatureUpdateProfiles) }  else { $false }
     [bool]$ProcessnotificationTemplates     = if ($Xml.root.Process.notificationMessageTemplates)  { [System.Convert]::ToBoolean($Xml.root.Process.notificationMessageTemplates) }  else { $false }
     [bool]$ProcessscopeTags                 = if ($Xml.root.Process.roleScopeTags)                 { [System.Convert]::ToBoolean($Xml.root.Process.roleScopeTags) }                 else { $false }
+    [bool]$ProcessmanagedDevices            = if ($Xml.root.Process.managedDevices)                { [System.Convert]::ToBoolean($Xml.root.Process.managedDevices) }                 else { $false }
+    [bool]$ProcesssettingsCatalog           = if ($Xml.root.Process.settingsCatalog)               { [System.Convert]::ToBoolean($Xml.root.Process.settingsCatalog) }               else { $false }
+    [bool]$ProcessappProtectionPolicies     = if ($Xml.root.Process.appProtectionPolicies)         { [System.Convert]::ToBoolean($Xml.root.Process.appProtectionPolicies) }         else { $false }
+    [bool]$ProcessassignmentFilters         = if ($Xml.root.Process.assignmentFilters)             { [System.Convert]::ToBoolean($Xml.root.Process.assignmentFilters) }             else { $false }
+    [bool]$ProcessendpointSecurity          = if ($Xml.root.Process.endpointSecurity)              { [System.Convert]::ToBoolean($Xml.root.Process.endpointSecurity) }              else { $false }
+    [bool]$ProcessstaleDevices              = if ($Xml.root.Process.staleDevices)                  { [System.Convert]::ToBoolean($Xml.root.Process.staleDevices) }                  else { $false }
+    [bool]$ProcessnonCompliantDevices       = if ($Xml.root.Process.nonCompliantDevices)           { [System.Convert]::ToBoolean($Xml.root.Process.nonCompliantDevices) }           else { $false }
+    [bool]$ProcessosVersionSummary          = if ($Xml.root.Process.osVersionSummary)              { [System.Convert]::ToBoolean($Xml.root.Process.osVersionSummary) }              else { $false }
 
     Write-Log "All config settings loaded successfully."
 }
@@ -808,6 +816,180 @@ if ($ProcessmanagedDeviceOverview -and $Document) {
 }
 #endregion
 
+#region managedDevices - Device Inventory
+if ($ProcessmanagedDevices) {
+    $selectFields = "deviceName,userPrincipalName,operatingSystem,osVersion,complianceState," +
+                    "lastSyncDateTime,manufacturer,model,serialNumber,isEncrypted," +
+                    "managedDeviceOwnerType,enrolledDateTime"
+
+    [array]$allDevices = @(Get-GraphUri -ApiVersion $script:graphApiVersion `
+        -Class "deviceManagement/managedDevices" `
+        -OData "?`$select=$selectFields" `
+        -Value)
+
+    if ($Export) {
+        foreach ($dev in $allDevices) {
+            if ($null -ne $dev) {
+                Export-JSONData -JSON $dev `
+                    -ExportPath "$ExportPath\deviceManagement\managedDevices" `
+                    -FileName ($dev.deviceName -replace '[\/:*?"<>|]', "_") `
+                    -Force | Out-Null
+            }
+        }
+    }
+
+    if ($Document) {
+        Add-WordText -WordDocument $WordDocument -Text 'Device Inventory' -HeadingType Heading1 -Supress $True
+        Add-WordText -WordDocument $WordDocument -Text '' -Supress $True
+
+        # --- Summary table ---
+        $totalDevices  = $allDevices.Count
+        $compliantCnt  = ($allDevices | Where-Object { $_.complianceState -eq 'compliant' }).Count
+        $nonCompCnt    = ($allDevices | Where-Object { $_.complianceState -eq 'noncompliant' }).Count
+        $unknownCnt    = $totalDevices - $compliantCnt - $nonCompCnt
+
+        $summaryHt = [ordered]@{
+            'Total Managed Devices' = [string]$totalDevices
+            'Compliant'             = [string]$compliantCnt
+            'Non-Compliant'         = [string]$nonCompCnt
+            'Unknown / Other'       = [string]$unknownCnt
+        }
+        Add-WordTable -WordDocument $WordDocument -DataTable $summaryHt -Design LightGridAccent1 -AutoFit Contents -Supress $True
+        Add-WordText -WordDocument $WordDocument -Text '' -Supress $True
+
+        # --- Device list table ---
+        $deviceTable = $allDevices | Where-Object { $null -ne $_ } | Sort-Object deviceName |
+            Select-Object `
+                @{ Name='Device Name'; Expression={ Format-DataToString $_.deviceName } },
+                @{ Name='User (UPN)';  Expression={ Format-DataToString $_.userPrincipalName } },
+                @{ Name='OS';          Expression={ Format-DataToString $_.operatingSystem } },
+                @{ Name='Version';     Expression={ Format-DataToString $_.osVersion } },
+                @{ Name='Status';      Expression={ Format-DataToString $_.complianceState } },
+                @{ Name='Last Sync';   Expression={
+                    $raw = $_.lastSyncDateTime
+                    if ($raw) {
+                        try { ([DateTime]::Parse($raw)).ToString('yyyy-MM-dd') }
+                        catch { Format-DataToString $raw }
+                    } else { '' }
+                }},
+                @{ Name='Encrypted';   Expression={ if ($_.isEncrypted) { 'Yes' } else { 'No' } } }
+
+        if ($deviceTable.Count -ge 1) {
+            Add-WordTable -WordDocument $WordDocument -DataTable $deviceTable -Design LightGridAccent1 -AutoFit Window -Supress $True
+        }
+    }
+}
+#endregion managedDevices
+
+#region staleDevices
+if ($ProcessstaleDevices) {
+    $staleSelect = "deviceName,userPrincipalName,operatingSystem,osVersion,lastSyncDateTime"
+    [array]$allForStale = @(Get-GraphUri -ApiVersion $script:graphApiVersion `
+        -Class "deviceManagement/managedDevices" `
+        -OData "?`$select=$staleSelect" `
+        -Value)
+
+    $cutoff = (Get-Date).AddDays(-30)
+    [array]$staleList = @($allForStale | Where-Object {
+        $null -ne $_ -and
+        -not [string]::IsNullOrEmpty($_.lastSyncDateTime) -and
+        ([DateTime]::Parse($_.lastSyncDateTime)) -le $cutoff
+    })
+
+    if ($Document) {
+        Add-WordText -WordDocument $WordDocument -Text 'Stale Devices (No Sync > 30 Days)' -HeadingType Heading1 -Supress $True
+        Add-WordText -WordDocument $WordDocument -Text '' -Supress $True
+
+        if ($staleList.Count -eq 0) {
+            Add-WordTable -WordDocument $WordDocument `
+                -DataTable ([ordered]@{ 'Result' = 'No stale devices found.' }) `
+                -Design LightGridAccent1 -AutoFit Contents -Supress $True
+        } else {
+            Add-WordTable -WordDocument $WordDocument `
+                -DataTable ([ordered]@{ 'Stale Devices (> 30 days without sync)' = [string]$staleList.Count }) `
+                -Design LightGridAccent1 -AutoFit Contents -Supress $True
+            Add-WordText -WordDocument $WordDocument -Text '' -Supress $True
+
+            $staleTable = $staleList | Sort-Object lastSyncDateTime |
+                Select-Object `
+                    @{ Name='Device Name'; Expression={ Format-DataToString $_.deviceName } },
+                    @{ Name='User (UPN)';  Expression={ Format-DataToString $_.userPrincipalName } },
+                    @{ Name='OS';          Expression={ Format-DataToString $_.operatingSystem } },
+                    @{ Name='Version';     Expression={ Format-DataToString $_.osVersion } },
+                    @{ Name='Last Sync';   Expression={
+                        $raw = $_.lastSyncDateTime
+                        if ($raw) { try { ([DateTime]::Parse($raw)).ToString('yyyy-MM-dd') } catch { Format-DataToString $raw } } else { '' }
+                    }}
+            Add-WordTable -WordDocument $WordDocument -DataTable $staleTable -Design LightGridAccent1 -AutoFit Window -Supress $True
+        }
+    }
+}
+#endregion staleDevices
+
+#region nonCompliantDevices
+if ($ProcessnonCompliantDevices) {
+    $ncSelect = "deviceName,userPrincipalName,operatingSystem,osVersion,complianceState,lastSyncDateTime"
+    [array]$nonCompliant = @(Get-GraphUri -ApiVersion $script:graphApiVersion `
+        -Class "deviceManagement/managedDevices" `
+        -OData "?`$filter=complianceState eq 'noncompliant'&`$select=$ncSelect" `
+        -Value)
+
+    if ($Document) {
+        Add-WordText -WordDocument $WordDocument -Text 'Non-Compliant Devices' -HeadingType Heading1 -Supress $True
+        Add-WordText -WordDocument $WordDocument -Text '' -Supress $True
+
+        if ($nonCompliant.Count -eq 0) {
+            Add-WordTable -WordDocument $WordDocument `
+                -DataTable ([ordered]@{ 'Result' = 'No non-compliant devices found.' }) `
+                -Design LightGridAccent1 -AutoFit Contents -Supress $True
+        } else {
+            Add-WordTable -WordDocument $WordDocument `
+                -DataTable ([ordered]@{ 'Non-Compliant Devices' = [string]$nonCompliant.Count }) `
+                -Design LightGridAccent1 -AutoFit Contents -Supress $True
+            Add-WordText -WordDocument $WordDocument -Text '' -Supress $True
+
+            $ncTable = $nonCompliant | Where-Object { $null -ne $_ } | Sort-Object deviceName |
+                Select-Object `
+                    @{ Name='Device Name'; Expression={ Format-DataToString $_.deviceName } },
+                    @{ Name='User (UPN)';  Expression={ Format-DataToString $_.userPrincipalName } },
+                    @{ Name='OS';          Expression={ Format-DataToString $_.operatingSystem } },
+                    @{ Name='Version';     Expression={ Format-DataToString $_.osVersion } },
+                    @{ Name='Last Sync';   Expression={
+                        $raw = $_.lastSyncDateTime
+                        if ($raw) { try { ([DateTime]::Parse($raw)).ToString('yyyy-MM-dd') } catch { Format-DataToString $raw } } else { '' }
+                    }}
+            Add-WordTable -WordDocument $WordDocument -DataTable $ncTable -Design LightGridAccent1 -AutoFit Window -Supress $True
+        }
+    }
+}
+#endregion nonCompliantDevices
+
+#region osVersionSummary
+if ($ProcessosVersionSummary) {
+    $osSelect = "operatingSystem,osVersion"
+    [array]$allForOS = @(Get-GraphUri -ApiVersion $script:graphApiVersion `
+        -Class "deviceManagement/managedDevices" `
+        -OData "?`$select=$osSelect" `
+        -Value)
+
+    if ($Document) {
+        Add-WordText -WordDocument $WordDocument -Text 'OS Version Summary' -HeadingType Heading1 -Supress $True
+        Add-WordText -WordDocument $WordDocument -Text '' -Supress $True
+
+        $grouped = $allForOS | Where-Object { $null -ne $_ } |
+            Group-Object operatingSystem, osVersion | Sort-Object Name |
+            Select-Object `
+                @{ Name='OS';      Expression={ ($_.Name -split ', ')[0] } },
+                @{ Name='Version'; Expression={ ($_.Name -split ', ')[1] } },
+                @{ Name='Devices'; Expression={ [string]$_.Count } }
+
+        if ($grouped.Count -ge 1) {
+            Add-WordTable -WordDocument $WordDocument -DataTable $grouped -Design LightGridAccent1 -AutoFit Contents -Supress $True
+        }
+    }
+}
+#endregion osVersionSummary
+
 #region Standard classes
 if ($ProcesstermsAndConditions)             { Invoke-GraphClass        -Class "deviceManagement/termsAndConditions"                -Title 'Terms and Conditions'                  -PropForFileName "@odata.type" -Value }
 if ($ProcessdeviceCompliancePolicies)       { Invoke-GraphClassExpand  -Class "deviceManagement/deviceCompliancePolicies"          -Title 'Device Compliance Policies'             -Value -GetLastChange:$DocumentLastChange }
@@ -817,6 +999,46 @@ if ($ProcesswindowsAutopilotDeploymentProfiles) { Invoke-GraphClassExpand -Class
 if ($ProcessapplePushNotificationCertificate)   { Invoke-GraphClass    -Class "deviceManagement/applePushNotificationCertificate" -Title 'Apple Push Notification Certificate'    -PropForFileName "@odata.type" -Value }
 if ($ProcessvppTokens)                      { Invoke-GraphClass        -Class "deviceAppManagement/vppTokens"                     -Title 'VPP Tokens'                             -Value }
 #endregion
+
+#region settingsCatalog
+if ($ProcesssettingsCatalog) {
+    $class = "deviceManagement/configurationPolicies"
+    [array]$scPolicies = Get-GraphUri -ApiVersion $script:graphApiVersion -Class $class -Value
+    $classpath = $class -replace "/", "\"
+
+    if ($Document) { Add-WordText -WordDocument $WordDocument -Text 'Settings Catalog' -HeadingType Heading1 -Supress $True }
+
+    foreach ($policy in $scPolicies) {
+        if ($null -eq $policy) { continue }
+
+        if ($Export) {
+            Export-JSONData -JSON $policy -ExportPath "$ExportPath\$classpath" `
+                -FileName ($policy.name -replace '[\/:*?"<>|]', "_") -Force | Out-Null
+        }
+
+        if ($Document) {
+            $ht = [ordered]@{
+                'Name'          = Format-DataToString $policy.name
+                'Description'   = Format-DataToString $policy.description
+                'Platforms'     = Format-DataToString $policy.platforms
+                'Technologies'  = Format-DataToString $policy.technologies
+                'Setting Count' = Format-DataToString $policy.settingCount
+                'Last Modified' = Format-DataToString $policy.lastModifiedDateTime
+                'Created'       = Format-DataToString $policy.createdDateTime
+            }
+            Add-WordText  -WordDocument $WordDocument -Text '' -Supress $True
+            Add-WordText  -WordDocument $WordDocument -Text (Format-DataToString $policy.name) -HeadingType Heading3 -Supress $True
+            Add-WordTable -WordDocument $WordDocument -DataTable $ht -Design LightGridAccent1 -AutoFit Contents -Supress $True
+
+            $expanded = Get-GraphUri -ApiVersion $script:graphApiVersion -Class $class -Id $policy.id -OData '?$expand=assignments'
+            if ($expanded -and $expanded.assignments.Count -ge 1) {
+                Add-WordText -WordDocument $WordDocument -Text '' -Supress $True
+                Add-AssignmentToDocument -Assignments $expanded.assignments -Groups $Groups
+            }
+        }
+    }
+}
+#endregion settingsCatalog
 
 #region mobileApps
 if ($ProcessmobileApps) {
@@ -852,6 +1074,39 @@ if ($ProcessmobileApps) {
     }
 }
 #endregion mobileApps
+
+#region appProtectionPolicies
+if ($ProcessappProtectionPolicies) {
+    $class = "deviceAppManagement/managedAppPolicies"
+    [array]$mamPolicies = Get-GraphUri -ApiVersion $script:graphApiVersion -Class $class -Value
+    $classpath = $class -replace "/", "\"
+
+    if ($Document) { Add-WordText -WordDocument $WordDocument -Text 'App Protection Policies (MAM)' -HeadingType Heading1 -Supress $True }
+
+    foreach ($policy in $mamPolicies) {
+        if ($null -eq $policy) { continue }
+
+        if ($Export) {
+            Export-JSONData -JSON $policy -ExportPath "$ExportPath\$classpath" `
+                -FileName ($policy.displayName -replace '[\/:*?"<>|]', "_") -Force | Out-Null
+        }
+
+        if ($Document) {
+            $policyType = ($policy.'@odata.type' -replace '#microsoft\.graph\.', '')
+            $ht = [ordered]@{
+                'Display Name'  = Format-DataToString $policy.displayName
+                'Policy Type'   = Format-DataToString $policyType
+                'Description'   = Format-DataToString $policy.description
+                'Last Modified' = Format-DataToString $policy.lastModifiedDateTime
+                'Created'       = Format-DataToString $policy.createdDateTime
+            }
+            Add-WordText  -WordDocument $WordDocument -Text '' -Supress $True
+            Add-WordText  -WordDocument $WordDocument -Text (Format-DataToString $policy.displayName) -HeadingType Heading3 -Supress $True
+            Add-WordTable -WordDocument $WordDocument -DataTable $ht -Design LightGridAccent1 -AutoFit Contents -Supress $True
+        }
+    }
+}
+#endregion appProtectionPolicies
 
 #region policySets
 if ($Processpolicysets) {
@@ -1042,6 +1297,15 @@ if ($ProcessdeviceCategories) {
 }
 #endregion deviceCategories
 
+#region assignmentFilters
+if ($ProcessassignmentFilters) {
+    Invoke-GraphClass -Class "deviceManagement/assignmentFilters" `
+        -Title 'Assignment Filters' `
+        -Properties "displayName","description","platform","rule","createdDateTime","lastModifiedDateTime","id" `
+        -PropForFileName "displayName" -Value
+}
+#endregion assignmentFilters
+
 #region deviceHealthScripts
 if ($ProcesshealthScripts) {
     Invoke-GraphClassExpand -Class "deviceManagement/deviceHealthScripts" `
@@ -1081,6 +1345,15 @@ if ($ProcessscopeTags) {
         -PropForFileName "displayName" -Value
 }
 #endregion roleScopeTags
+
+#region endpointSecurity
+if ($ProcessendpointSecurity) {
+    Invoke-GraphClassExpand -Class "deviceManagement/intents" `
+        -Title 'Endpoint Security Policies' `
+        -Properties "displayName","description","isAssigned","lastModifiedDateTime","id" `
+        -PropForFileName "displayName" -Value
+}
+#endregion endpointSecurity
 
 #region groups
 if ($ProcessGroups) {
@@ -1125,3 +1398,4 @@ if ($Document) {
 Write-Log "---------- Script Completed ----------"
 Write-Host "Script completed." -ForegroundColor Green
 #endregion Execution
+
