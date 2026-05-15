@@ -50,8 +50,6 @@
     <policysets>True</policysets>
     <groupPolicyConfigurations>True</groupPolicyConfigurations>
     <deviceManagementScripts>True</deviceManagementScripts>
-    <!-- OFF: high performance impact, not critical -->
-    <Groups>False</Groups>
     <!-- Conditional Access policies - requires Policy.ReadWrite.ConditionalAccess -->
     <conditionalAccess>True</conditionalAccess>
     <!-- Custom RBAC roles in Intune -->
