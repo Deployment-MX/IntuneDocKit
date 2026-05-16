@@ -58,8 +58,6 @@
     <roleAssignments>True</roleAssignments>
     <!-- Device categories configured in Intune -->
     <deviceCategories>True</deviceCategories>
-    <!-- OFF: HealthMonitoringData.Read.All does not exist as delegated permission in Graph -->
-    <deviceHealthScripts>False</deviceHealthScripts>
     <!-- OFF: returns null if no Windows Quality Update profiles exist -->
     <windowsQualityUpdateProfiles>True</windowsQualityUpdateProfiles>
     <!-- OFF: returns null if no Windows Feature Update profiles exist -->
