@@ -50,6 +50,8 @@
     <policysets>True</policysets>
     <groupPolicyConfigurations>True</groupPolicyConfigurations>
     <deviceManagementScripts>True</deviceManagementScripts>
+    <!-- OFF: high performance impact, not critical -->
+    <Groups>False</Groups>
     <!-- Conditional Access policies - requires Policy.ReadWrite.ConditionalAccess -->
     <conditionalAccess>True</conditionalAccess>
     <!-- Custom RBAC roles in Intune -->
@@ -58,6 +60,8 @@
     <roleAssignments>True</roleAssignments>
     <!-- Device categories configured in Intune -->
     <deviceCategories>True</deviceCategories>
+    <!-- OFF: HealthMonitoringData.Read.All does not exist as delegated permission in Graph -->
+    <deviceHealthScripts>False</deviceHealthScripts>
     <!-- OFF: returns null if no Windows Quality Update profiles exist -->
     <windowsQualityUpdateProfiles>True</windowsQualityUpdateProfiles>
     <!-- OFF: returns null if no Windows Feature Update profiles exist -->
@@ -82,5 +86,22 @@
     <nonCompliantDevices>True</nonCompliantDevices>
     <!-- OS Version Summary - device count grouped by OS and version -->
     <osVersionSummary>True</osVersionSummary>
+    <!-- ===================== INTUNE SUITE ===================== -->
+    <!-- Endpoint Privilege Management - elevation requests and policies -->
+    <endpointPrivilegeManagement>True</endpointPrivilegeManagement>
+    <!-- Microsoft Cloud PKI - certification authorities -->
+    <cloudPKI>False</cloudPKI>
+    <!-- Microsoft Tunnel - sites and configurations -->
+    <microsoftTunnel>True</microsoftTunnel>
+    <!-- Windows Driver Update Profiles -->
+    <windowsDriverUpdateProfiles>True</windowsDriverUpdateProfiles>
+    <!-- Remote Help - remote assistance sessions -->
+    <remoteHelp>True</remoteHelp>
+    <!-- Organizational Messages - in-product messaging to end users -->
+    <organizationalMessages>False</organizationalMessages>
+    <!-- Zebra FOTA - firmware over-the-air for Zebra Android devices -->
+    <zebraFota>False</zebraFota>
+    <!-- Mobile App Troubleshooting Events -->
+    <mobileAppTroubleshooting>False</mobileAppTroubleshooting>
   </Process>
 </root>
