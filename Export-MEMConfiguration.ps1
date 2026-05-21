@@ -694,6 +694,15 @@ try {
     [bool]$ProcessstaleDevices              = if ($Xml.root.Process.staleDevices)                  { [System.Convert]::ToBoolean($Xml.root.Process.staleDevices) }                  else { $false }
     [bool]$ProcessnonCompliantDevices       = if ($Xml.root.Process.nonCompliantDevices)           { [System.Convert]::ToBoolean($Xml.root.Process.nonCompliantDevices) }           else { $false }
     [bool]$ProcessosVersionSummary          = if ($Xml.root.Process.osVersionSummary)              { [System.Convert]::ToBoolean($Xml.root.Process.osVersionSummary) }              else { $false }
+    # --- Intune Suite ---
+    [bool]$ProcessendpointPrivilegeManagement = if ($Xml.root.Process.endpointPrivilegeManagement) { [System.Convert]::ToBoolean($Xml.root.Process.endpointPrivilegeManagement) } else { $false }
+    [bool]$ProcesscloudPKI                  = if ($Xml.root.Process.cloudPKI)                     { [System.Convert]::ToBoolean($Xml.root.Process.cloudPKI) }                     else { $false }
+    [bool]$ProcessmicrosoftTunnel           = if ($Xml.root.Process.microsoftTunnel)               { [System.Convert]::ToBoolean($Xml.root.Process.microsoftTunnel) }               else { $false }
+    [bool]$ProcesswindowsDriverUpdates      = if ($Xml.root.Process.windowsDriverUpdateProfiles)   { [System.Convert]::ToBoolean($Xml.root.Process.windowsDriverUpdateProfiles) }   else { $false }
+    [bool]$ProcessremoteHelp                = if ($Xml.root.Process.remoteHelp)                     { [System.Convert]::ToBoolean($Xml.root.Process.remoteHelp) }                     else { $false }
+    [bool]$ProcessorganizationalMessages    = if ($Xml.root.Process.organizationalMessages)         { [System.Convert]::ToBoolean($Xml.root.Process.organizationalMessages) }         else { $false }
+    [bool]$ProcesszebraFota                 = if ($Xml.root.Process.zebraFota)                      { [System.Convert]::ToBoolean($Xml.root.Process.zebraFota) }                      else { $false }
+    [bool]$ProcessmobileAppTroubleshooting  = if ($Xml.root.Process.mobileAppTroubleshooting)       { [System.Convert]::ToBoolean($Xml.root.Process.mobileAppTroubleshooting) }       else { $false }
 
     Write-Log "All config settings loaded successfully."
 }
@@ -1373,6 +1382,76 @@ if ($ProcessGroups) {
     }
 }
 #endregion groups
+
+#region endpointPrivilegeManagement
+if ($ProcessendpointPrivilegeManagement) {
+    Invoke-GraphClass -Class "deviceManagement/privilegeManagementElevationRequests" `
+        -Title 'Endpoint Privilege Management - Elevation Requests' `
+        -PropForFileName "displayName" -Value
+}
+#endregion endpointPrivilegeManagement
+
+#region cloudPKI
+if ($ProcesscloudPKI) {
+    Invoke-GraphClass -Class "deviceManagement/cloudCertificationAuthority" `
+        -Title 'Microsoft Cloud PKI - Certification Authorities' `
+        -PropForFileName "displayName" -Value
+}
+#endregion cloudPKI
+
+#region microsoftTunnel
+if ($ProcessmicrosoftTunnel) {
+    Invoke-GraphClass -Class "deviceManagement/microsoftTunnelSites" `
+        -Title 'Microsoft Tunnel - Sites' `
+        -PropForFileName "displayName" -Value
+    Invoke-GraphClass -Class "deviceManagement/microsoftTunnelConfigurations" `
+        -Title 'Microsoft Tunnel - Configurations' `
+        -PropForFileName "displayName" -Value
+}
+#endregion microsoftTunnel
+
+#region windowsDriverUpdateProfiles
+if ($ProcesswindowsDriverUpdates) {
+    Invoke-GraphClassExpand -Class "deviceManagement/windowsDriverUpdateProfiles" `
+        -Title 'Windows Driver Update Profiles' `
+        -PropForFileName "displayName" -Value
+}
+#endregion windowsDriverUpdateProfiles
+
+#region remoteHelp
+if ($ProcessremoteHelp) {
+    Invoke-GraphClass -Class "deviceManagement/remoteHelpSessions" `
+        -Title 'Remote Help - Sessions' `
+        -PropForFileName "id" -Value
+}
+#endregion remoteHelp
+
+#region organizationalMessages
+if ($ProcessorganizationalMessages) {
+    Invoke-GraphClass -Class "deviceManagement/organizationalMessages" `
+        -Title 'Organizational Messages' `
+        -PropForFileName "displayName" -Value
+}
+#endregion organizationalMessages
+
+#region zebraFota
+if ($ProcesszebraFota) {
+    Invoke-GraphClass -Class "deviceManagement/zebraFotaDeployments" `
+        -Title 'Zebra FOTA - Deployments' `
+        -PropForFileName "displayName" -Value
+    Invoke-GraphClass -Class "deviceManagement/zebraFotaConnector" `
+        -Title 'Zebra FOTA - Connector' `
+        -PropForFileName "id" -Value
+}
+#endregion zebraFota
+
+#region mobileAppTroubleshooting
+if ($ProcessmobileAppTroubleshooting) {
+    Invoke-GraphClass -Class "deviceManagement/mobileAppTroubleshootingEvents" `
+        -Title 'Mobile App Troubleshooting Events' `
+        -PropForFileName "id" -Value
+}
+#endregion mobileAppTroubleshooting
 
 if ($Document) {
     if ($null -ne $WordDocument) {
